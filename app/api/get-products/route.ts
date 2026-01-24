@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server'
-import { appendOrder } from '@/lib/googleSheets'
+import { fetchProducts } from '@/lib/googleSheets'
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   try {
-    const body = await request.json()
+    
+  // get from Google Sheets
+  const products = await fetchProducts();
     
     // Validate
-    if (!body.name || !body.phone || !body.product) {
+    if (!products) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Save to Google Sheets
-    await appendOrder(body)
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true , data: products })
   } catch (error) {
     console.error('Order submission error:', error)
     return NextResponse.json(

@@ -24,9 +24,17 @@ export async function appendOrder( orderData: any) {
   ]]
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: process.env.GOOGLE_SHEET_ID,
+    spreadsheetId: process.env.GOOGLE_SHEET_ORDER_DB_ID,
     range: 'A1:F1',
     valueInputOption: 'USER_ENTERED',
     requestBody: { values }
   })
+}
+
+export async function fetchProducts() {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.GOOGLE_SHEET_PRODUCTS_DB_ID,
+    range: 'A:D', 
+  })
+return  res.data.values
 }
