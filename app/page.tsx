@@ -13,7 +13,7 @@ type CartItem = {
 type ProductType = {
   id: number;
   name: string;
-  price: string;
+  price: number;
   active: string;
 }
 
@@ -70,7 +70,7 @@ export default function OrderForm() {
           {
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: Number(product.price),
             quantity: 1
           }
         ]
