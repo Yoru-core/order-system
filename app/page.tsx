@@ -2,6 +2,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+type CartItem = {
+  id: number
+  name: string
+  price: number
+  quantity: number
+}
+
+
 type ProductType = {
   id: number;
   name: string;
@@ -12,7 +20,7 @@ type ProductType = {
 type FormDataType = {
   name: string;
   phone: string;
-  product: string;
+  items: CartItem[]
   quantity: number;
   address: string;
   notes: string;
@@ -23,7 +31,7 @@ export default function OrderForm() {
   const [formData, setFormData] = useState<FormDataType>({
     name: '',
     phone: '',
-    product: '',
+    items: [],
     quantity: 1,
     address: '',
     notes: ''
@@ -31,7 +39,82 @@ export default function OrderForm() {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [products, setProducts] = useState<ProductType[]>([]);
+  const [query, setQuery] = useState('')
+  const [filtered, setFiltered] = useState<ProductType[]>([])
   const [loading, setLoading] = useState(true);
+
+  const total = formData.items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  )
+
+  function addProduct(product: ProductType) {
+    setFormData(prev => {
+      const existing = prev.items.find(i => i.id === product.id)
+
+      if (existing) {
+        return {
+          ...prev,
+          items: prev.items.map(i =>
+            i.id === product.id
+              ? { ...i, quantity: i.quantity + 1 }
+              : i
+          )
+        }
+      }
+
+      return {
+        ...prev,
+        items: [
+          ...prev.items,
+          {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1
+          }
+        ]
+      }
+    })
+  }
+  function removeItem(id: number) {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.id !== id)
+    }))
+  }
+  function decreaseQuantity(id: number) {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.flatMap(item => {
+        if (item.id !== id) return item
+
+        if (item.quantity === 1) return [] // gone
+        return { ...item, quantity: item.quantity - 1 }
+      })
+    }))
+  }
+
+  useEffect(() => {
+    if (!query) {
+      setFiltered([])
+      return
+    }
+
+    setFiltered(
+      products
+        .filter(p =>
+          p.name.toLowerCase().includes(query.toLowerCase())
+        )
+        .slice(0, 6) // hard limit for sanity
+    )
+  }, [query, products])
+
+  useEffect(() => {
+    console.log(formData.items)
+  }, [])
+
+
 
   useEffect(() => {
     fetchProducts();
@@ -85,12 +168,21 @@ export default function OrderForm() {
       })
 
       // 2. Generate WhatsApp message
+      const itemsText = formData.items
+        .map(i => `• ${i.name} x${i.quantity} = ${i.price * i.quantity} DA`)
+        .join('\n')
+
       const message = `🛒 طلب جديد / NOUVELLE COMMANDE
       Nom et prénom: ${formData.name}
       Numéro de téléphone: ${formData.phone}
-      Produit: ${formData.product}
       Quantité: ${formData.quantity}
       Address: ${formData.address}
+      Produits:
+      ${itemsText}
+      
+
+      Total: ${total} DA
+
       ${formData.notes ? `Remarques: ${formData.notes}` : 'Aucune information supplémentaire'}`
 
       // 3. Open WhatsApp
@@ -106,7 +198,6 @@ export default function OrderForm() {
       setIsSubmitting(false)
     }
   }
-
   return (
     <div className='h-screen w-screen flex flex-col items-center justify-center '>
       <form onSubmit={handleSubmit} className="backdrop-blur-sm  text-white space-y-2 max-w-md mx-auto p-4 border rounded-xl shadow-[0_0_25px_-5px_rgba(0,0,0,1)]" >
@@ -123,7 +214,7 @@ export default function OrderForm() {
           </p>
         </div>
 
-        <div className='border rounded-xl p-4 border-gray-400 shadow-[0_0_25px_-10px_rgba(0,0,0,1)] space-y-2 '>
+        <div className='space-y-2 '>
           <div>
             <label className="block text-sm font-medium mb-1">
               Nom et prénom ( الاسم و اللقب) :
@@ -158,35 +249,88 @@ export default function OrderForm() {
             <label className="block text-sm font-medium mb-1">
               Produit (المنتج) :
             </label>
-            {loading ? <p className='font-bold text-center'>جاري التحميل...</p> :
-              <select
-                required
-                value={formData.product}
-                onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                className="w-full p-2 border rounded-lg border-gray-400"
-              >
-                <option className='text-black' value="">اختر المنتج / Select Product</option>
-                {products.map((product) => (
-                  <option className='text-black' key={product.id} value={product.name}>{product.name} - {product.price}</option>
-                ))}
-              </select>
-            }
+            <div className="relative">
+              <input
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="ابحث عن المنتج..."
+                className="w-full p-2 border rounded-lg text-black"
+              />
+
+              {filtered.length > 0 && (
+                <div className="absolute z-10 w-full bg-white text-black rounded-lg shadow-lg mt-1 max-h-60 overflow-auto">
+                  {filtered.map(product => (
+                    <button
+                      type="button"
+                      key={product.id}
+                      onClick={() => {
+                        addProduct(product)
+                        setQuery('')
+                        setFiltered([])
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                    >
+                      {product.name} — {product.price} DA
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-
-
           {/* Quantity */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Quantité (الكمية) :
-            </label>
-            <input
-              type="number"
-              min="1"
-              value={formData.quantity}
-              onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
-              className="w-full p-2 border rounded-lg border-gray-400"
-            />
-          </div>
+          {formData.items.map(item => (
+            <div
+              key={item.id}
+              className="flex justify-between items-center border-b pb-2"
+            >
+              <div>
+                <p className="font-semibold">{item.name}</p>
+                <p className="text-sm opacity-70">
+                  {item.price} DA × {item.quantity}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => decreaseQuantity(item.id)}
+                  className="px-2 py-1 rounded border"
+                >
+                  −
+                </button>
+
+                <span>{item.quantity}</span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData(prev => ({
+                      ...prev,
+                      items: prev.items.map(i =>
+                        i.id === item.id
+                          ? { ...i, quantity: i.quantity + 1 }
+                          : i
+                      )
+                    }))
+                  }
+                  className="px-2 py-1 rounded border"
+                >
+                  +
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => removeItem(item.id)}
+                  className="ml-2 text-red-500 font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+
+
 
           {/* Address (optional) */}
           <div>
@@ -202,26 +346,11 @@ export default function OrderForm() {
               placeholder="حي 123 بلوك 5"
             />
           </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Remarques (ملاحظات) :
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full p-2 border rounded-lg border-gray-400"
-              rows={3}
-              placeholder="أي تفاصيل إضافية..."
-            />
-          </div>
-
           {/* Submit */}
           <p className='text-center'>⚠️ سيتم تأكيد الطلب عبر الهاتف أو واتساب قبل التوصيل ⚠️</p>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || formData.items.length === 0}
             className="w-full bg-green-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-green-700 disabled:bg-gray-400"
           >
             {isSubmitting ? 'جاري الإرسال...' : '📱 إرسال الطلب عبر واتساب'}
