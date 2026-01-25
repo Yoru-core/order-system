@@ -1,70 +1,68 @@
 // components/OrderForm.tsx
-'use client'
-import { useEffect, useState } from 'react'
+"use client";
+import { useEffect, useState } from "react";
 
 type CartItem = {
-  id: number
-  name: string
-  price: number
-  quantity: number
-}
-
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+};
 
 type ProductType = {
   id: number;
   name: string;
   price: number;
   active: string;
-}
+};
 
 export type FormDataType = {
   name: string;
   phone: string;
-  items: CartItem[]
+  items: CartItem[];
   address: string;
   notes: string;
-}
+};
 
 export default function OrderForm() {
-  const whatsappNumber = '+213558447356'
+  const whatsappNumber = "+213558447356";
   const [formData, setFormData] = useState<FormDataType>({
-    name: '',
-    phone: '',
+    name: "",
+    phone: "",
     items: [],
-    address: '',
-    notes: ''
-  })
+    address: "",
+    notes: "",
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [products, setProducts] = useState<ProductType[]>([]);
-  const [query, setQuery] = useState('')
-  const [filtered, setFiltered] = useState<ProductType[]>([])
+  const [query, setQuery] = useState("");
+  const [filtered, setFiltered] = useState<ProductType[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
 
   const total = formData.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
-  )
-  const MAX_PRODUCTS = 4
+    0,
+  );
+  const MAX_PRODUCTS = 4;
 
   function addProduct(product: ProductType) {
-    setFormData(prev => {
-      const existing = prev.items.find(i => i.id === product.id)
+    setFormData((prev) => {
+      const existing = prev.items.find((i) => i.id === product.id);
 
       // If product already exists → just increase quantity
       if (existing) {
         return {
           ...prev,
-          items: prev.items.map(i =>
-            i.id === product.id
-              ? { ...i, quantity: i.quantity + 1 }
-              : i
-          )
-        }
+          items: prev.items.map((i) =>
+            i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+          ),
+        };
       }
 
       // Block adding new product if limit reached
       if (prev.items.length >= MAX_PRODUCTS) {
-        return prev
+        return prev;
       }
 
       // Add new product
@@ -76,51 +74,48 @@ export default function OrderForm() {
             id: product.id,
             name: product.name,
             price: Number(product.price),
-            quantity: 1
-          }
-        ]
-      }
-    })
+            quantity: 1,
+          },
+        ],
+      };
+    });
   }
   function removeItem(id: number) {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      items: prev.items.filter(item => item.id !== id)
-    }))
+      items: prev.items.filter((item) => item.id !== id),
+    }));
   }
   function decreaseQuantity(id: number) {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      items: prev.items.flatMap(item => {
-        if (item.id !== id) return item
+      items: prev.items.flatMap((item) => {
+        if (item.id !== id) return item;
 
-        if (item.quantity === 1) return [] // gone
-        return { ...item, quantity: item.quantity - 1 }
-      })
-    }))
+        if (item.quantity === 1) return []; // gone
+        return { ...item, quantity: item.quantity - 1 };
+      }),
+    }));
   }
 
   useEffect(() => {
-    if (!query) {
-      setFiltered([])
-      return
+    if (!isFocused) {
+      setFiltered([]);
+      return;
     }
-
     setFiltered(
-      products
-        .filter(p =>
-          p.name.toLowerCase().includes(query.toLowerCase())
-        )
-        .slice(0, 6) // hard limit for sanity
-    )
-  }, [query, products])
+      products.filter((p) =>
+        p.name.toLowerCase().includes(query.toLowerCase()),
+      ),
+    );
+  }, [query, isFocused, products]);
 
   useEffect(() => {
     fetchProducts();
   }, []);
   async function fetchProducts() {
     try {
-      const res = await fetch('/api/get-products');
+      const res = await fetch("/api/get-products");
       const result = await res.json();
 
       if (result.success) {
@@ -131,41 +126,44 @@ export default function OrderForm() {
           const dataRows = allRows.slice(1);
 
           // Map rows to ProductType
-          const parsedProducts: ProductType[] = dataRows.map((row: any[]) => ({
-            id: row[0] || 0,           // Assuming first column is id
-            name: row[1] || '',        // Assuming second column is name
-            price: row[2] || '',       // Assuming third column is price
-            active: row[3] || ''       // Assuming fourth column is active
-          })).filter((product: ProductType) =>
-            product.name && product.active === 'TRUE' // Only show active products
-          );
+          const parsedProducts: ProductType[] = dataRows
+            .map((row: any[]) => ({
+              id: row[0] || 0, // Assuming first column is id
+              name: row[1] || "", // Assuming second column is name
+              price: row[2] || "", // Assuming third column is price
+              active: row[3] || "", // Assuming fourth column is active
+            }))
+            .filter(
+              (product: ProductType) =>
+                product.name && product.active === "TRUE", // Only show active products
+            );
 
           setProducts(parsedProducts);
         }
       } else {
-        alert('❌ حدث خطأ. حاول مرة أخرى');
+        alert("❌ حدث خطأ. حاول مرة أخرى");
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
-      alert('❌ حدث خطأ. حاول مرة أخرى');
+      console.error("Error fetching products:", error);
+      alert("❌ حدث خطأ. حاول مرة أخرى");
     }
   }
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       // 1. Save to Google Sheets
-      await fetch('/api/submit-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData })
-      })
+      await fetch("/api/submit-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData }),
+      });
 
       // 2. Generate WhatsApp message
       const itemsText = formData.items
-        .map(i => `• ${i.name} x${i.quantity} = ${i.price * i.quantity} DA`)
-        .join('\n')
+        .map((i) => `• ${i.name} x${i.quantity} = ${i.price * i.quantity} DA`)
+        .join("\n");
 
       const message = `🛒 طلب جديد / NOUVELLE COMMANDE
       Nom et prénom: ${formData.name}
@@ -176,47 +174,63 @@ export default function OrderForm() {
       
       Total: ${total} DA
 
-      ${formData.notes ? `Remarques: ${formData.notes}` : 'Aucune information supplémentaire'}`
+      ${formData.notes ? `Remarques: ${formData.notes}` : "Aucune information supplémentaire"}`;
 
       // 3. Open WhatsApp
-      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
-      window.open(whatsappUrl, '_self')
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, "_self");
 
       // Success feedback
-      alert('✅ تم إرسال الطلب! سيتم فتح واتساب الآن')
-
+      alert("✅ تم إرسال الطلب! سيتم فتح واتساب الآن");
     } catch (error) {
-      alert('❌ حدث خطأ. حاول مرة أخرى')
+      alert("❌ حدث خطأ. حاول مرة أخرى");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
   return (
-    <div className='h-screen w-screen flex flex-col items-center justify-center '>
-      <form onSubmit={handleSubmit} className="backdrop-blur-sm  text-white space-y-2 max-w-md mx-auto p-4 border rounded-xl shadow-[0_0_25px_-5px_rgba(0,0,0,1)]" >
+    <div className="h-screen w-screen flex flex-col items-center justify-center ">
+      <form
+        onSubmit={handleSubmit}
+        className="backdrop-blur-sm  text-white space-y-2 max-w-md mx-auto p-4 border rounded-xl shadow-[0_0_25px_-5px_rgba(0,0,0,1)]"
+      >
         {/* Name */}
-        <div className='flex flex-col items-center space-y-2 '>
-          <div className='flex items-center gap-4'>
-            <div className='backdrop-blur-sm rounded-full border border-white p-1.5 shadow-[0_5px_25px_-5px_rgba(0,0,0,1)]  ' >
-              <img src="./washing-machine.png" alt="wasing machine svg" width={30} height={30} />
+        <div className="flex flex-col items-center space-y-2 ">
+          <div className="flex items-center gap-4">
+            <div className="backdrop-blur-sm rounded-full border border-white p-1.5 shadow-[0_5px_25px_-5px_rgba(0,0,0,1)]  ">
+              <img
+                src="./washing-machine.png"
+                alt="wasing machine svg"
+                width={30}
+                height={30}
+              />
             </div>
-            <p className='font-bold text-xl'>متجر الاجهزة المنزلية</p>
+            <p className="font-bold text-xl">متجر الاجهزة المنزلية</p>
           </div>
-          <p>
-            يرجى ملئ المعلومات و سيتم تأكيد الطلب عبر الواتساب
-          </p>
+          <p>يرجى ملئ المعلومات و سيتم تأكيد الطلب عبر الواتساب</p>
         </div>
 
-        <div className='space-y-2 '>
+        <div className="space-y-2 ">
           <div>
             <label className="block text-sm font-medium mb-1">
-              Nom et prénom ( الاسم و اللقب) :
+              <div className="flex justify-between items-center w-full">
+                <span>
+
+                  Nom et prénom:
+                </span>
+                <span>
+
+                  :الاسم و اللقب
+                </span>
+              </div>
             </label>
             <input
               type="text"
               required
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               className="w-full p-2 border rounded-lg border-gray-400 "
               placeholder="أحمد"
             />
@@ -225,13 +239,24 @@ export default function OrderForm() {
           {/* Phone */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Numéro de téléphone (رقم الهاتف) :
+              <div className="flex justify-between items-center w-full">
+                <span>
+
+                  Numéro de téléphone:
+                </span>
+                <span>
+
+                  :رقم الهاتف
+                </span>
+              </div>
             </label>
             <input
               type="tel"
               required
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
               className="w-full p-2 border rounded-lg border-gray-400"
               placeholder="0555123456"
             />
@@ -240,39 +265,56 @@ export default function OrderForm() {
           {/* Product */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Produit (المنتج) يمكنك اختيار 4 منتجات مختلفة فقط :
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="ابحث عن المنتج..."
-                className="w-full p-2 border rounded-lg text-black"
-              />
+              <div className="flex justify-between items-center w-full">
+                <span>
 
-              {filtered.length > 0 && (
-                <div className="absolute z-10 w-full bg-white text-black rounded-lg shadow-lg mt-1 max-h-60 overflow-auto">
-                  {filtered.map(product => (
-                    <button
-                      type="button"
-                      key={product.id}
-                      onClick={() => {
-                        addProduct(product)
-                        setQuery('')
-                        setFiltered([])
-                      }}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100"
-                    >
-                      {product.name} — {product.price} DA
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                  Produit:
+                </span>
+                <span>
+
+                  :المنتج
+                </span>
+                {/* يمكنك اختيار 4 منتجات مختلفة فقط: */}
+              </div>
+            </label>
+            {products.length > 0 ? (
+              <div className="relative">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => {
+                    setTimeout(() => setIsFocused(false), 150);
+                  }}
+                  placeholder="ابحث عن المنتج..."
+                  className="w-full p-2 border border-gray-400 rounded-lg "
+                />
+
+                {filtered.length > 0 && (
+                  <div className="absolute z-10 w-full bg-white text-black rounded-lg shadow-lg mt-1 max-h-60 overflow-y-scroll">
+                    {filtered.map((product) => (
+                      <button
+                        type="button"
+                        key={product.id}
+                        onClick={() => {
+                          addProduct(product);
+                          setQuery("");
+                          setFiltered([]);
+                        }}
+                        className="w-full px-3 py-2 hover:bg-gray-100 flex justify-between items-center"
+                      >
+                        <span> {product.name}</span>
+                        <span className="font-semibold"> {product.price} DA </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>)
+              : (<div className="text-white italic text-center">جاري التحميل...</div>)}
           </div>
           {/* Quantity */}
-          {formData.items.map(item => (
+          {formData.items.map((item) => (
             <div
               key={item.id}
               className="flex justify-between items-center border-b pb-2"
@@ -298,13 +340,13 @@ export default function OrderForm() {
                 <button
                   type="button"
                   onClick={() =>
-                    setFormData(prev => ({
+                    setFormData((prev) => ({
                       ...prev,
-                      items: prev.items.map(i =>
+                      items: prev.items.map((i) =>
                         i.id === item.id
                           ? { ...i, quantity: i.quantity + 1 }
-                          : i
-                      )
+                          : i,
+                      ),
                     }))
                   }
                   className="px-2 py-1 rounded border"
@@ -323,33 +365,45 @@ export default function OrderForm() {
             </div>
           ))}
 
-
-
           {/* Address (optional) */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Address (العنوان) :
+            <p className="text-center font-semibold">
+              يمكنك اختيار 4 منتجات مختلفة فقط
+            </p>
+            <label className="block text-sm font-medium mb-1 ">
+              <div className="flex justify-between items-center w-full">
+                <span>
+                  Address:
+                </span>
+                <span>
+                  :العنوان
+                </span>
+              </div>
             </label>
             <input
               required
               type="text"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
               className="w-full p-2 border rounded-lg border-gray-400"
               placeholder="حي 123 بلوك 5"
             />
           </div>
           {/* Submit */}
-          <p className='text-center'>⚠️ سيتم تأكيد الطلب عبر الهاتف أو واتساب قبل التوصيل ⚠️</p>
+          <p className="text-center font-bold">
+            ⚠️ سيتم تأكيد الطلب عبر الهاتف أو واتساب قبل التوصيل ⚠️
+          </p>
           <button
             type="submit"
             disabled={isSubmitting || formData.items.length === 0}
             className="w-full bg-green-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-green-700 disabled:bg-gray-400"
           >
-            {isSubmitting ? 'جاري الإرسال...' : '📱 إرسال الطلب عبر واتساب'}
+            {isSubmitting ? "جاري الإرسال..." : "📱 إرسال الطلب عبر واتساب"}
           </button>
         </div>
-      </form >
+      </form>
     </div>
-  )
+  );
 }
