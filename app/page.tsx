@@ -41,7 +41,6 @@ export default function OrderForm() {
   const [products, setProducts] = useState<ProductType[]>([]);
   const [query, setQuery] = useState('')
   const [filtered, setFiltered] = useState<ProductType[]>([])
-  const [loading, setLoading] = useState(true);
 
   const total = formData.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -111,12 +110,6 @@ export default function OrderForm() {
   }, [query, products])
 
   useEffect(() => {
-    console.log(formData.items)
-  }, [])
-
-
-
-  useEffect(() => {
     fetchProducts();
   }, []);
   async function fetchProducts() {
@@ -141,7 +134,6 @@ export default function OrderForm() {
             product.name && product.active === 'TRUE' // Only show active products
           );
 
-          console.log('Parsed products:', parsedProducts);
           setProducts(parsedProducts);
         }
       } else {
@@ -150,13 +142,10 @@ export default function OrderForm() {
     } catch (error) {
       console.error('Error fetching products:', error);
       alert('❌ حدث خطأ. حاول مرة أخرى');
-    } finally {
-      setLoading(false);
     }
   }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log(formData)
     setIsSubmitting(true)
 
     try {
@@ -175,7 +164,6 @@ export default function OrderForm() {
       const message = `🛒 طلب جديد / NOUVELLE COMMANDE
       Nom et prénom: ${formData.name}
       Numéro de téléphone: ${formData.phone}
-      Quantité: ${formData.quantity}
       Address: ${formData.address}
       Produits:
       ${itemsText}
@@ -184,8 +172,9 @@ export default function OrderForm() {
       Total: ${total} DA
 
       ${formData.notes ? `Remarques: ${formData.notes}` : 'Aucune information supplémentaire'}`
+      console.log(message);
 
-      // 3. Open WhatsApp
+      // // 3. Open WhatsApp
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
       window.open(whatsappUrl, '_self')
 
