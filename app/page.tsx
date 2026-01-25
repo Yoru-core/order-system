@@ -46,11 +46,13 @@ export default function OrderForm() {
     (sum, item) => sum + item.price * item.quantity,
     0
   )
+  const MAX_PRODUCTS = 4
 
   function addProduct(product: ProductType) {
     setFormData(prev => {
       const existing = prev.items.find(i => i.id === product.id)
 
+      // If product already exists → just increase quantity
       if (existing) {
         return {
           ...prev,
@@ -62,6 +64,12 @@ export default function OrderForm() {
         }
       }
 
+      // Block adding new product if limit reached
+      if (prev.items.length >= MAX_PRODUCTS) {
+        return prev
+      }
+
+      // Add new product
       return {
         ...prev,
         items: [
@@ -168,13 +176,12 @@ export default function OrderForm() {
       Produits:
       ${itemsText}
       
-
       Total: ${total} DA
 
       ${formData.notes ? `Remarques: ${formData.notes}` : 'Aucune information supplémentaire'}`
       console.log(message);
 
-      // // 3. Open WhatsApp
+      // 3. Open WhatsApp
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
       window.open(whatsappUrl, '_self')
 
@@ -236,7 +243,7 @@ export default function OrderForm() {
           {/* Product */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Produit (المنتج) :
+              Produit (المنتج) يمكنك اختيار 4 منتجات مختلفة فقط :
             </label>
             <div className="relative">
               <input
