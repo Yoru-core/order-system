@@ -1,3 +1,4 @@
+import { FormDataType } from '@/app/page'
 import { google } from 'googleapis'
 
 const auth = new google.auth.GoogleAuth({
@@ -10,22 +11,24 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: 'v4', auth })
 
-export async function appendOrder( orderData: any) { 
+export async function appendOrder( orderData: FormDataType) { 
+   const itemsText = orderData.items
+        .map(i => `• ${i.name} x${i.quantity} = ${i.price * i.quantity} DA`)
+        .join('\n')
+
   const timestamp = new Date().toLocaleString('en-GB', { timeZone: 'Africa/Algiers' })
   const values = [[
     orderData.name,
     orderData.phone,
-    orderData.product,
-    orderData.quantity,
+    itemsText,
     orderData.address || '',
     orderData.notes || '',
     timestamp,
     'New' // Status
   ]]
-
   await sheets.spreadsheets.values.append({
     spreadsheetId: process.env.GOOGLE_SHEET_ORDER_DB_ID,
-    range: 'A1:F1',
+    range: 'A1:E1',
     valueInputOption: 'USER_ENTERED',
     requestBody: { values }
   })

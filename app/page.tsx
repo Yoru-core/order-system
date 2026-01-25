@@ -17,11 +17,10 @@ type ProductType = {
   active: string;
 }
 
-type FormDataType = {
+export type FormDataType = {
   name: string;
   phone: string;
   items: CartItem[]
-  quantity: number;
   address: string;
   notes: string;
 }
@@ -32,7 +31,6 @@ export default function OrderForm() {
     name: '',
     phone: '',
     items: [],
-    quantity: 1,
     address: '',
     notes: ''
   })
@@ -179,7 +177,6 @@ export default function OrderForm() {
       Total: ${total} DA
 
       ${formData.notes ? `Remarques: ${formData.notes}` : 'Aucune information supplémentaire'}`
-      console.log(message);
 
       // 3. Open WhatsApp
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`

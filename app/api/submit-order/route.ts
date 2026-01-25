@@ -3,10 +3,10 @@ import { appendOrder } from '@/lib/googleSheets'
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    const body = await request.json()    
     
     // Validate
-    if (!body.name || !body.phone || !body.product) {
+    if (!body.name || !body.phone || !body.items) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
