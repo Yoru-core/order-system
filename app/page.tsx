@@ -211,8 +211,7 @@ export default function OrderForm() {
 
       // 3. Open WhatsApp
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-      // window.open(whatsappUrl, "_self");
-      console.log(message)
+      window.open(whatsappUrl, "_self");
 
       // Success feedback
       alert("✅ تم إرسال الطلب! سيتم فتح واتساب الآن");
