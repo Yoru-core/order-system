@@ -1,6 +1,8 @@
 // components/OrderForm.tsx
 "use client";
-import { useEffect, useState } from "react";
+import { stores } from "@/config/store";
+import { ChangeEvent, useEffect, useState } from "react";
+import wilayasData from '../config/Wilaya_Of_Algeria.json';
 
 type CartItem = {
   id: number;
@@ -20,16 +22,18 @@ export type FormDataType = {
   name: string;
   phone: string;
   items: CartItem[];
+  wilaya: string;
   address: string;
   notes: string;
 };
 
 export default function OrderForm() {
-  const whatsappNumber = "+213558447356";
+  const whatsappNumber = stores.whatsappNumber
   const [formData, setFormData] = useState<FormDataType>({
     name: "",
     phone: "",
     items: [],
+    wilaya: '',
     address: "",
     notes: "",
   });
@@ -39,11 +43,36 @@ export default function OrderForm() {
   const [query, setQuery] = useState("");
   const [filtered, setFiltered] = useState<ProductType[]>([]);
   const [isFocused, setIsFocused] = useState(false);
+  const [selectedWilaya, setSelectedWilaya] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, ""); // Keep only digits
+    setFormData({ ...formData, phone: value });
+
+    // Algerian Regex: Starts with 0, then 2-7, followed by 8 digits
+    const algerianRegex = /^0[567][0-9]{8}$/
+
+
+
+
+    if (value.length > 0 && !algerianRegex.test(value)) {
+      if (value.startsWith("05") || value.startsWith("06") || value.startsWith("07")) {
+        // Validating Mobile
+        setPhoneError(value.length === 10 ? "" : "يجب أن يكون الرقم مكونًا من 10 أرقام");
+      } else {
+        setPhoneError("يجب أن يبدأ الرقم بـ 05, 06 او 07 ");
+      }
+    } else {
+      setPhoneError("");
+    }
+  };
+  const currentWilaya = wilayasData.find(w => w.name === selectedWilaya);
+  const deliveryPrice = currentWilaya ? currentWilaya["Delivery price"] : 0;
 
   const total = formData.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
-  );
+  ) + deliveryPrice;
   const MAX_PRODUCTS = 4;
 
   function addProduct(product: ProductType) {
@@ -165,20 +194,25 @@ export default function OrderForm() {
         .map((i) => `• ${i.name} x${i.quantity} = ${i.price * i.quantity} DA`)
         .join("\n");
 
-      const message = `🛒 طلب جديد / NOUVELLE COMMANDE
-      Nom et prénom: ${formData.name}
-      Numéro de téléphone: ${formData.phone}
-      Address: ${formData.address}
-      Produits:
+      const message = `
+      🛒 طلب جديد / NOUVELLE COMMANDE
+      --------------------------
+      👤 Nom et prénom: ${formData.name}
+      📞 Numéro de téléphone: ${formData.phone}
+      📍 Wilaya: ${formData.wilaya}
+      🏠 Address: ${formData.address}
+      --------------------------    
+      🛒 Produits:
       ${itemsText}
-      
+      --------------------------
       Total: ${total} DA
 
       ${formData.notes ? `Remarques: ${formData.notes}` : "Aucune information supplémentaire"}`;
 
       // 3. Open WhatsApp
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, "_self");
+      // window.open(whatsappUrl, "_self");
+      console.log(message)
 
       // Success feedback
       alert("✅ تم إرسال الطلب! سيتم فتح واتساب الآن");
@@ -192,10 +226,10 @@ export default function OrderForm() {
     <div className="h-screen w-screen flex flex-col items-center justify-center ">
       <form
         onSubmit={handleSubmit}
-        className="backdrop-blur-sm  text-white space-y-2 max-w-md mx-auto p-4 border rounded-xl shadow-[0_0_25px_-5px_rgba(0,0,0,1)]"
+        className="backdrop-blur-sm  text-white space-y-1 max-w-md mx-auto p-4 border rounded-xl shadow-[0_0_25px_-5px_rgba(0,0,0,1)]"
       >
         {/* Name */}
-        <div className="flex flex-col items-center space-y-2 ">
+        <div className="flex flex-col items-center space-y-1 ">
           <div className="flex items-center gap-4">
             <div className="backdrop-blur-sm rounded-full border border-white p-1.5 shadow-[0_5px_25px_-5px_rgba(0,0,0,1)]  ">
               <img
@@ -210,7 +244,7 @@ export default function OrderForm() {
           <p>يرجى ملئ المعلومات و سيتم تأكيد الطلب عبر الواتساب</p>
         </div>
 
-        <div className="space-y-2 ">
+        <div className="space-y-1 ">
           <div>
             <label className="block text-sm font-medium mb-1">
               <div className="flex justify-between items-center w-full">
@@ -254,12 +288,14 @@ export default function OrderForm() {
               type="tel"
               required
               value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
+              onChange={handlePhoneChange}
               className="w-full p-2 border rounded-lg border-gray-400"
               placeholder="0555123456"
+              pattern="^0[2-7][0-9]{8}$"
+              maxLength={10}
             />
+            {phoneError && <p className="text-red-400 text-xs font-bold text-right mt-1">{phoneError}</p>}
+
           </div>
 
           {/* Product */}
@@ -330,7 +366,7 @@ export default function OrderForm() {
                 <button
                   type="button"
                   onClick={() => decreaseQuantity(item.id)}
-                  className="px-2 py-1 rounded border"
+                  className="px-2 py-1 rounded border  cursor-pointer"
                 >
                   −
                 </button>
@@ -349,7 +385,7 @@ export default function OrderForm() {
                       ),
                     }))
                   }
-                  className="px-2 py-1 rounded border"
+                  className="px-2 py-1 rounded border cursor-pointer"
                 >
                   +
                 </button>
@@ -357,19 +393,20 @@ export default function OrderForm() {
                 <button
                   type="button"
                   onClick={() => removeItem(item.id)}
-                  className="ml-2 text-red-500 font-bold"
+                  className="ml-2 text-red-500 font-bold cursor-pointer "
                 >
                   ✕
                 </button>
               </div>
             </div>
           ))}
+          <p className="text-center font-semibold">
+            يمكنك اختيار 4 منتجات مختلفة فقط
+          </p>
+          <p className="text-center text-xl font-bold">DA المجموع: {total}</p>
 
           {/* Address (optional) */}
-          <div>
-            <p className="text-center font-semibold">
-              يمكنك اختيار 4 منتجات مختلفة فقط
-            </p>
+          {/* <div>
             <label className="block text-sm font-medium mb-1 ">
               <div className="flex justify-between items-center w-full">
                 <span>
@@ -390,6 +427,49 @@ export default function OrderForm() {
               className="w-full p-2 border rounded-lg border-gray-400"
               placeholder="حي 123 بلوك 5"
             />
+          </div> */}
+          <div>
+            <label className="block text-sm font-medium mb-1 ">
+              <div className="flex justify-between items-center w-full">
+                <span>
+                  Address:
+                </span>
+                <span>
+                  :العنوان
+                </span>
+              </div>
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                required
+                name="wilaya"
+                value={formData.wilaya}
+                onChange={(e) => {
+                  setSelectedWilaya(e.target.value)
+                  setFormData({ ...formData, wilaya: e.target.value });
+                }
+                }
+                className="cursor-pointer w-full sm:w-48 p-2 border text-white border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option className="text-black" value="">Select Wilaya</option>
+                {wilayasData.map((w) => (
+                  <option className="text-black " key={w.id} value={w.name}>{w.id} - {w.name}</option>
+                ))}
+              </select>
+
+              {/* Address Field - Grows to fill space */}
+              <input
+                required
+                type="text"
+                name="address"
+                placeholder="حي 123 بلوك 5"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+                className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
           </div>
           {/* Submit */}
           <p className="text-center font-bold">
@@ -403,7 +483,7 @@ export default function OrderForm() {
             {isSubmitting ? "جاري الإرسال..." : "📱 إرسال الطلب عبر واتساب"}
           </button>
         </div>
-      </form>
-    </div>
+      </form >
+    </div >
   );
 }

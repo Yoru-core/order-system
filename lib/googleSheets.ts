@@ -24,7 +24,8 @@ export async function appendOrder(orderData: FormDataType) {
       orderData.name,
       orderData.phone,
       itemsText,
-      orderData.address || "",
+      orderData.wilaya,
+      orderData.address,
       orderData.notes || "",
       timestamp,
       "New", // Status
@@ -32,7 +33,7 @@ export async function appendOrder(orderData: FormDataType) {
   ];
   await sheets.spreadsheets.values.append({
     spreadsheetId: process.env.GOOGLE_SHEET_ORDER_DB_ID,
-    range: "A1:E1",
+    range: "A1:F1",
     valueInputOption: "USER_ENTERED",
     requestBody: { values },
   });
