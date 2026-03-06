@@ -1,4 +1,4 @@
-import { FormDataType } from "@/app/page";
+import { FormDataType } from "@/app/page1";
 import { google } from "googleapis";
 
 const auth = new google.auth.GoogleAuth({
@@ -15,7 +15,10 @@ export async function appendOrder(orderData: FormDataType) {
   const itemsText = orderData.items
     .map((i) => `• ${i.name} x${i.quantity} = ${i.price * i.quantity} DA`)
     .join("\n");
-
+  const total = orderData.items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
   const timestamp = new Date().toLocaleString("en-GB", {
     timeZone: "Africa/Algiers",
   });
@@ -27,13 +30,14 @@ export async function appendOrder(orderData: FormDataType) {
       orderData.wilaya,
       orderData.address,
       orderData.notes || "",
+      total,
       timestamp,
       "New", // Status
     ],
   ];
   await sheets.spreadsheets.values.append({
     spreadsheetId: process.env.GOOGLE_SHEET_ORDER_DB_ID,
-    range: "A1:F1",
+    range: "A1:G1",
     valueInputOption: "USER_ENTERED",
     requestBody: { values },
   });
@@ -42,7 +46,7 @@ export async function appendOrder(orderData: FormDataType) {
 export async function fetchProducts() {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEET_PRODUCTS_DB_ID,
-    range: "A:D",
+    range: "A:E",
   });
   return res.data.values;
 }

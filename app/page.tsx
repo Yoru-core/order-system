@@ -6,6 +6,7 @@ import wilayasData from '../config/Wilaya_Of_Algeria.json';
 
 type CartItem = {
   id: number;
+  image: string;
   name: string;
   price: number;
   quantity: number;
@@ -13,6 +14,7 @@ type CartItem = {
 
 type ProductType = {
   id: number;
+  image: string
   name: string;
   price: number;
   active: string;
@@ -45,6 +47,7 @@ export default function OrderForm() {
   const [isFocused, setIsFocused] = useState(false);
   const [selectedWilaya, setSelectedWilaya] = useState("");
   const [phoneError, setPhoneError] = useState("");
+
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, ""); // Keep only digits
     setFormData({ ...formData, phone: value });
@@ -101,6 +104,7 @@ export default function OrderForm() {
           ...prev.items,
           {
             id: product.id,
+            image: product.image,
             name: product.name,
             price: Number(product.price),
             quantity: 1,
@@ -128,10 +132,6 @@ export default function OrderForm() {
   }
 
   useEffect(() => {
-    if (!isFocused) {
-      setFiltered([]);
-      return;
-    }
     setFiltered(
       products.filter((p) =>
         p.name.toLowerCase().includes(query.toLowerCase()),
@@ -158,15 +158,15 @@ export default function OrderForm() {
           const parsedProducts: ProductType[] = dataRows
             .map((row: any[]) => ({
               id: row[0] || 0, // Assuming first column is id
-              name: row[1] || "", // Assuming second column is name
-              price: row[2] || "", // Assuming third column is price
-              active: row[3] || "", // Assuming fourth column is active
+              image: row[1] || "",
+              name: row[2] || "", // Assuming second column is name
+              price: row[3] || "", // Assuming third column is price
+              active: row[4] || "", // Assuming fourth column is active
             }))
             .filter(
               (product: ProductType) =>
                 product.name && product.active === "TRUE", // Only show active products
             );
-
           setProducts(parsedProducts);
         }
       } else {
@@ -221,268 +221,276 @@ export default function OrderForm() {
       setIsSubmitting(false);
     }
   };
+
   return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center ">
-      <form
-        onSubmit={handleSubmit}
-        className="backdrop-blur-sm  text-white space-y-1 max-w-md mx-auto p-4 border rounded-xl shadow-[0_0_25px_-5px_rgba(0,0,0,1)]"
-      >
-        {/* Name */}
-        <div className="flex flex-col items-center space-y-1 ">
-          <div className="flex items-center gap-4">
-            <div className="backdrop-blur-sm rounded-full border border-white p-1.5 shadow-[0_5px_25px_-5px_rgba(0,0,0,1)]  ">
-              <img
-                src="./washing-machine.png"
-                alt="wasing machine svg"
-                width={30}
-                height={30}
-              />
-            </div>
-            <p className="font-bold text-xl">متجر الاجهزة المنزلية</p>
-          </div>
-          <p>يرجى ملئ المعلومات و سيتم تأكيد الطلب عبر الواتساب</p>
-        </div>
-
-        <div className="space-y-1 ">
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              <div className="flex justify-between items-center w-full">
-                <span>
-
-                  Nom et prénom:
-                </span>
-                <span>
-
-                  :الاسم و اللقب
-                </span>
-              </div>
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full p-2 border rounded-lg border-gray-400 "
-              placeholder="أحمد"
-            />
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              <div className="flex justify-between items-center w-full">
-                <span>
-
-                  Numéro de téléphone:
-                </span>
-                <span>
-
-                  :رقم الهاتف
-                </span>
-              </div>
-            </label>
-            <input
-              type="tel"
-              required
-              value={formData.phone}
-              onChange={handlePhoneChange}
-              className="w-full p-2 border rounded-lg border-gray-400"
-              placeholder="0555123456"
-              pattern="^0[2-7][0-9]{8}$"
-              maxLength={10}
-            />
-            {phoneError && <p className="text-red-400 text-xs font-bold text-right mt-1">{phoneError}</p>}
-
-          </div>
-
-          {/* Product */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              <div className="flex justify-between items-center w-full">
-                <span>
-
-                  Produit:
-                </span>
-                <span>
-
-                  :المنتج
-                </span>
-                {/* يمكنك اختيار 4 منتجات مختلفة فقط: */}
-              </div>
-            </label>
-            {products.length > 0 ? (
-              <div className="relative">
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => {
-                    setTimeout(() => setIsFocused(false), 150);
-                  }}
-                  placeholder="ابحث عن المنتج..."
-                  className="w-full p-2 border border-gray-400 rounded-lg "
+    <div className="h-screen w-screen flex items-center justify-center">
+      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-6 min-h-5/6 min-w-2/3">
+        {/* LEFT COLUMN: User Details (Glass Panel) */}
+        <div className="flex-1 bg-white/10 backdrop-blur-xs border border-white/20 p-4 rounded-2xl space-y-4">
+          <div className="flex flex-col items-center space-y-2 ">
+            <div className="flex items-center gap-4">
+              <div className="rounded-full border border-white p-1.5 shadow-[0_5px_25px_-5px_rgba(0,0,0,1)]  ">
+                <img
+                  src="./washing-machine.png"
+                  alt="wasing machine svg"
+                  width={30}
+                  height={30}
                 />
-
-                {filtered.length > 0 && (
-                  <div className="absolute z-10 w-full bg-white text-black rounded-lg shadow-lg mt-1 max-h-60 overflow-y-scroll">
-                    {filtered.map((product) => (
-                      <button
-                        type="button"
-                        key={product.id}
-                        onClick={() => {
-                          addProduct(product);
-                          setQuery("");
-                          setFiltered([]);
-                        }}
-                        className="w-full px-3 py-2 hover:bg-gray-100 flex justify-between items-center"
-                      >
-                        <span> {product.name}</span>
-                        <span className="font-semibold"> {product.price} DA </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>)
-              : (<div className="text-white italic text-center">جاري التحميل...</div>)}
-          </div>
-          {/* Quantity */}
-          {formData.items.map((item) => (
-            <div
-              key={item.id}
-              className="flex justify-between items-center border-b pb-2"
-            >
-              <div>
-                <p className="font-semibold">{item.name}</p>
-                <p className="text-sm opacity-70">
-                  {item.price} DA × {item.quantity}
-                </p>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => decreaseQuantity(item.id)}
-                  className="px-2 py-1 rounded border  cursor-pointer"
-                >
-                  −
-                </button>
-
-                <span>{item.quantity}</span>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      items: prev.items.map((i) =>
-                        i.id === item.id
-                          ? { ...i, quantity: i.quantity + 1 }
-                          : i,
-                      ),
-                    }))
-                  }
-                  className="px-2 py-1 rounded border cursor-pointer"
-                >
-                  +
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.id)}
-                  className="ml-2 text-red-500 font-bold cursor-pointer "
-                >
-                  ✕
-                </button>
-              </div>
+              <p className="font-bold text-xl text-white">متجر الاجهزة المنزلية</p>
             </div>
-          ))}
-          <p className="text-center font-semibold">
-            يمكنك اختيار 4 منتجات مختلفة فقط
-          </p>
-          <p className="text-center text-xl font-bold">DA المجموع: {total}</p>
+            <p className="text-white/80">يرجى ملئ المعلومات و سيتم تأكيد الطلب عبر الواتساب</p>
+          </div>
+          {/* Name */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-white mb-2">
+                <div className="flex justify-between items-center w-full">
+                  <span>
 
-          {/* Address (optional) */}
-          {/* <div>
-            <label className="block text-sm font-medium mb-1 ">
-              <div className="flex justify-between items-center w-full">
-                <span>
-                  Address:
-                </span>
-                <span>
-                  :العنوان
-                </span>
-              </div>
-            </label>
-            <input
-              required
-              type="text"
-              value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
-              className="w-full p-2 border rounded-lg border-gray-400"
-              placeholder="حي 123 بلوك 5"
-            />
-          </div> */}
-          <div>
-            <label className="block text-sm font-medium mb-1 ">
-              <div className="flex justify-between items-center w-full">
-                <span>
-                  Address:
-                </span>
-                <span>
-                  :العنوان
-                </span>
-              </div>
-            </label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                required
-                name="wilaya"
-                value={formData.wilaya}
-                onChange={(e) => {
-                  setSelectedWilaya(e.target.value)
-                  setFormData({ ...formData, wilaya: e.target.value });
-                }
-                }
-                className="cursor-pointer w-full sm:w-48 p-2 border text-white border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option className="text-black" value="">Select Wilaya</option>
-                {wilayasData.map((w) => (
-                  <option className="text-black " key={w.id} value={w.name}>{w.id} - {w.name}</option>
-                ))}
-              </select>
+                    Nom et prénom:
+                  </span>
+                  <span>
 
-              {/* Address Field - Grows to fill space */}
+                    :الاسم و اللقب
+                  </span>
+                </div>
+              </label>
               <input
-                required
                 type="text"
-                name="address"
-                placeholder="حي 123 بلوك 5"
-                value={formData.address}
+                required
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
+                  setFormData({ ...formData, name: e.target.value })
                 }
-                className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                className='w-full bg-white/5 border border-white/10 p-2 rounded outline-none text-white'
+                placeholder="أحمد"
               />
+
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-semibold text-white mb-2">
+                <div className="flex justify-between items-center w-full">
+                  <span>
+
+                    Numéro de téléphone:
+                  </span>
+                  <span>
+
+                    :رقم الهاتف
+                  </span>
+                </div>
+              </label>
+              <input
+                type="tel"
+                required
+                value={formData.phone}
+                onChange={handlePhoneChange}
+                className='w-full bg-white/5 border border-white/10 p-2 rounded outline-none text-white'
+                placeholder="0555123456"
+                pattern="^0[2-7][0-9]{8}$"
+                maxLength={10}
+              />
+              {phoneError && <p className="text-red-400 text-xs font-bold text-right mt-1">{phoneError}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-white mb-2">
+                <div className="flex justify-between items-center w-full">
+                  <span>
+                    Address:
+                  </span>
+                  <span>
+                    :العنوان
+                  </span>
+                </div>
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <select
+                  required
+                  name="wilaya"
+                  value={formData.wilaya}
+                  onChange={(e) => {
+                    setSelectedWilaya(e.target.value)
+                    setFormData({ ...formData, wilaya: e.target.value });
+                  }
+                  }
+                  className="cursor-pointer w-full sm:w-48  bg-white/5 border border-white/10 p-2 rounded text-white outline-none"
+                >
+                  <option className="text-black" value="">Select Wilaya</option>
+                  {wilayasData.map((w) => (
+                    <option className="text-black " key={w.id} value={w.name}>{w.id} - {w.name}</option>
+                  ))}
+                </select>
+
+                {/* Address Field - Grows to fill space */}
+                <input
+                  required
+                  type="text"
+                  name="address"
+                  placeholder="حي 123 بلوك 5"
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
+                  className="flex-1 bg-white/5 border border-white/10 p-2 rounded outline-none text-white"
+                />
+              </div>
+            </div>
+
+            <div className="backdrop-blur-sm p-4 rounded-xl shadow-2xl w-full border border-white/10">
+              {/* Header: Search Input and Label */}
+              <div className="flex items-center justify-between gap-2 mb-6">
+
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="ابحث عن المنتج..."
+                    value={query}
+                    disabled={products.length === 0}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="disabled:cursor-not-allowed w-full outline-none border-gray-600 rounded-lg py-2 pl-10 pr-4 text-white "
+                  />
+                </div>
+                <div className="flex items-center gap-2 text-white font-semibold">
+                  <span>المنتج</span>
+                </div>
+              </div>
+
+
+              {/* Results List */}
+              {/* Product */}
+
+              {products.length > 0 ? (
+                <div className="space-y-3 max-h-40 overflow-y-scroll p-2
+                [&::-webkit-scrollbar]:w-2
+                [&::-webkit-scrollbar-track]:bg-transparent
+              [&::-webkit-scrollbar-thumb]:bg-[#888]
+                [&::-webkit-scrollbar-thumb]:rounded-xl">
+                  {filtered.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between bg-transparent border-b border-white/20 pb-3">
+                      <div className="flex items-center gap-4">
+                        <img src={product.image} className=" w-12 h-10 bg-white object-contain rounded" />
+                        <div className="text-left">
+                          <h4 className="text-white text-sm ">{product.name}</h4>
+                          <p className="text-white text-xs fo">{product.price} DA × 1</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        <span className="text-white font-bold">{product.price} DA</span>
+                        <button
+                          key={product.id}
+                          onClick={() => {
+                            addProduct(product);
+                            setQuery("");
+                          }}
+                          className="bg-transparent border border-gray-500 text-white rounded-md w-8 h-8 flex items-center justify-center hover:bg-gray-700 cursor-pointer">
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>) : (<>
+                  <div role="status" className="flex items-center justify-center gap-4">
+                    <svg aria-hidden="true" className="w-6 h-6 text-black animate-spin fill-blue-500" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor" />
+                      <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill" />
+                    </svg>
+                    <div className="text-white italic text-center">جاري التحميل...</div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-          {/* Submit */}
-          <p className="text-center font-bold">
-            ⚠️ سيتم تأكيد الطلب عبر الهاتف أو واتساب قبل التوصيل ⚠️
-          </p>
-          <button
-            type="submit"
-            disabled={isSubmitting || formData.items.length === 0}
-            className="w-full bg-green-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-green-700 disabled:bg-gray-400"
-          >
-            {isSubmitting ? "جاري الإرسال..." : "📱 إرسال الطلب عبر واتساب"}
-          </button>
         </div>
-      </form >
-    </div >
+
+        {/* RIGHT COLUMN: Cart Summary (Glass Panel) */}
+        <div className="w-full md:w-sm bg-white/10 backdrop-blur-xs border border-white/20 p-4 rounded-2xl flex flex-col justify-between">
+          <div>
+            <h2 className="text-white mb-4 border-b border-white/20 py-5 text-xl font-bold">طلبك</h2>
+            {/* Quantity */}
+            {formData.items.map((item) => (
+              <div
+                key={item.id}
+                className="flex justify-between items-center p-4 border border-white/20 mb-2 rounded "
+              >
+                <img src={item.image}
+                  className="transition-all duration-250 origin-center hover:scale-[6] hover:z-50 hover:relative w-12 h-12 object-contain bg-white rounded" />
+                <div className="text-white">
+                  <p className="text-sm font-semibold max-w-28 line-clamp-1 whitespace-normal wrap-break-word"
+                    title={item.name}
+                  >{item.name}</p>
+                  <p className="text-xs opacity-70">
+                    {item.price} DA × {item.quantity}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 text-white">
+                  <button
+                    type="button"
+                    onClick={() => decreaseQuantity(item.id)}
+                    className="text-center bg-transparent border border-white text-white rounded-md w-8 h-8 flex items-center justify-center hover:bg-gray-700 cursor-pointer"
+                  >
+                    −
+                  </button>
+
+                  <span>{item.quantity}</span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        items: prev.items.map((i) =>
+                          i.id === item.id
+                            ? { ...i, quantity: i.quantity + 1 }
+                            : i,
+                        ),
+                      }))
+                    }
+                    className="text-center bg-transparent border border-white text-white rounded-md w-8 h-8 flex items-center justify-center hover:bg-gray-700 cursor-pointer"
+                  >
+                    +
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    className=" text-red-500 font-bold cursor-pointer "
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex flex-col text-white font-bold text-right gap-2">
+              <span className="text-xl ">: المجموع</span>
+              <span className="text-xl">{total} DA</span>
+            </div>
+            {/* <button type="submit" className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl transition-all">
+              Send via WhatsApp
+            </button>
+          </div> */}
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isSubmitting || formData.items.length === 0}
+              className="disabled:cursor-not-allowed w-full bg-emerald-400 text-white p-4 rounded-xl transition-all font-bold  hover:bg-green-700 disabled:bg-gray-400"
+            >
+              {isSubmitting ? "جاري الإرسال..." : " إرسال الطلب عبر واتساب"}
+            </button>
+            <p className="text-center font-bold text-white">
+              📦 سيتم تأكيد الطلب عبر الهاتف أو واتساب قبل التوصيل
+            </p>
+          </div>
+        </div>
+
+      </form ></div >
   );
 }
