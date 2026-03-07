@@ -3,6 +3,7 @@
 import { stores } from "@/config/store";
 import { ChangeEvent, useEffect, useState } from "react";
 import wilayasData from '../config/Wilaya_Of_Algeria.json';
+import { edgeServerPages } from "next/dist/build/webpack/plugins/pages-manifest-plugin";
 
 type CartItem = {
   id: number;
@@ -224,9 +225,9 @@ export default function OrderForm() {
 
   return (
     <div className="h-screen w-screen flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-6 min-h-5/6 min-w-2/3">
+      <form onSubmit={handleSubmit} className="size-full p-2 md:p-0 md:size-fit flex flex-col md:flex-row md:gap-6 min-h-5/6 min-w-2/3">
         {/* LEFT COLUMN: User Details (Glass Panel) */}
-        <div className="flex-1 bg-white/10 backdrop-blur-xs border border-white/20 p-4 rounded-2xl space-y-4">
+        <div className="flex-1 space-y-4 p-4 backdrop-blur-xs md:border md:bg-white/10 md:border-white/20 md:rounded-2xl">
           <div className="flex flex-col items-center space-y-2 ">
             <div className="flex items-center gap-4">
               <div className="rounded-full border border-white p-1.5 shadow-[0_5px_25px_-5px_rgba(0,0,0,1)]  ">
@@ -408,9 +409,9 @@ export default function OrderForm() {
         </div>
 
         {/* RIGHT COLUMN: Cart Summary (Glass Panel) */}
-        <div className="w-full md:w-sm bg-white/10 backdrop-blur-xs border border-white/20 p-4 rounded-2xl flex flex-col justify-between">
+        <div className="w-full md:w-sm backdrop-blur-xs p-4 flex flex-col justify-between md:border md:bg-white/10 md:border-white/20 md:rounded-2xl">
           <div>
-            <h2 className="text-white mb-4 border-b border-white/20 py-5 text-xl font-bold">طلبك</h2>
+            <h2 className="text-right text-white mb-4 border-b border-white/20 py-4 text-xl font-bold">طلبك</h2>
             {/* Quantity */}
             {formData.items.map((item) => (
               <div
@@ -467,11 +468,20 @@ export default function OrderForm() {
               </div>
             ))}
           </div>
-
-          <div className="space-y-2">
-            <div className="flex flex-col text-white font-bold text-right gap-2">
-              <span className="text-xl ">: المجموع</span>
+          <div className="space-y-2 ">
+            <button onClick={() => setFormData({
+              name: "",
+              phone: "",
+              items: [],
+              wilaya: '',
+              address: "",
+              notes: "",
+            })}
+              disabled={formData.items.length === 0}
+              className="block mx-auto disabled:bg-gray-400 disabled:cursor-not-allowed rounded-xl px-4 py-2  transition-all font-bold bg-red-500 hover:bg-red-700 cursor-pointer text-center">Delete</button>
+            <div className="flex justify-between text-white font-bold">
               <span className="text-xl">{total} DA</span>
+              <span className="text-xl ">: المجموع</span>
             </div>
             {/* <button type="submit" className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl transition-all">
               Send via WhatsApp
@@ -490,7 +500,7 @@ export default function OrderForm() {
             </p>
           </div>
         </div>
-
-      </form ></div >
+      </form >
+    </div>
   );
 }
