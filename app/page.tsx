@@ -267,7 +267,6 @@ export default function OrderForm() {
                 className='w-full bg-white/5 border border-white/10 p-2 rounded outline-none text-white'
                 placeholder="أحمد"
               />
-
             </div>
 
             {/* Phone */}
@@ -355,9 +354,7 @@ export default function OrderForm() {
                     className="disabled:cursor-not-allowed w-full outline-none border-gray-600 rounded-lg py-2 pl-10 pr-4 text-white "
                   />
                 </div>
-                <div className="flex items-center gap-2 text-white font-semibold">
-                  <span>المنتج</span>
-                </div>
+                <span className="text-white font-semibold">المنتج</span>
               </div>
 
 
@@ -365,7 +362,7 @@ export default function OrderForm() {
               {/* Product */}
 
               {products.length > 0 ? (
-                <div className="space-y-3 max-h-40 overflow-y-scroll p-2
+                <div className="space-y-3 max-h-72 md:max-h-40 overflow-y-scroll p-2
                 [&::-webkit-scrollbar]:w-2
                 [&::-webkit-scrollbar-track]:bg-transparent
               [&::-webkit-scrollbar-thumb]:bg-[#888]
@@ -383,6 +380,7 @@ export default function OrderForm() {
                       <div className="flex items-center gap-6">
                         <span className="text-white font-bold">{product.price} DA</span>
                         <button
+                          type="button"
                           key={product.id}
                           onClick={() => {
                             addProduct(product);
